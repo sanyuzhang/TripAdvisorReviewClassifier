@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 
 
 RANDOM = False
-IS_TUNING = True
+IS_TUNING = False
 TARGET = 'ratingOverall'
 FEATURE_COLS = ['ratingOverall', 'annotatorId', 'ratingRoom', 'hotelId', 'ratingLocation', 'ratingCleanliness', 'ratingService', 'ratingBusiness', 'ratingValue', 'ratingCheckin']
 
@@ -60,7 +60,7 @@ def train_classifier(X_train, y_train):
         'num_class': 5,
         'num_leaves': 15,
         "num_threads": 4,
-        'learning_rate': 0.02,
+        'learning_rate': 0.01,
         'feature_fraction': 0.9,
         'bagging_fraction': 0.8,
         'bagging_freq': 5,
