@@ -5,7 +5,6 @@ Skeleton code. Note that this is not valid code due to all the dots.
 """
 import json
 import nltk
-import random
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
