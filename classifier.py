@@ -14,7 +14,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
 
-RANDOM = False
 IS_TUNING = False
 TARGET = 'ratingOverall'
 FEATURE_COLS = ['ratingOverall', 'annotatorId', 'ratingRoom', 'hotelId', 'ratingLocation', 'ratingCleanliness', 'ratingService', 'ratingBusiness', 'ratingValue', 'ratingCheckin']
@@ -22,9 +21,6 @@ FEATURE_COLS = ['ratingOverall', 'annotatorId', 'ratingRoom', 'hotelId', 'rating
 
 def create_feature_sets(data):
     # create feature sets
-    if RANDOM:
-        random.shuffle(data)
-
     feature_sets = [gen_features(item) for item in data]
     
     df = pd.DataFrame.from_dict(feature_sets, orient='columns', dtype='int')
@@ -32,7 +28,7 @@ def create_feature_sets(data):
     X = df.drop(columns=[TARGET], axis=1, inplace=False)
     y = df[TARGET]
 
-    return train_test_split(X, y, train_size=0.75)
+    return train_test_split(X, y, train_size=0.75, random_state=1)
 
 
 def gen_features(item):
@@ -61,8 +57,8 @@ def train_classifier(X_train, y_train):
         'num_leaves': 15,
         "num_threads": 4,
         'learning_rate': 0.01,
-        'feature_fraction': 0.9,
-        'bagging_fraction': 0.8,
+        'feature_fraction': 0.4,
+        'bagging_fraction': 0.6,
         'bagging_freq': 5,
         'n_estimators': 500,
         'verbose': 0
@@ -82,6 +78,8 @@ def evaluate_classifier(classifier, X_test, y_test):
     # get the accuracy and print it
     y_pred = classifier.predict(X_test, num_iteration=classifier.best_iteration)
     y_pred_max = [np.argmax(pred) for pred in y_pred]
+    # for (a, b) in zip(y_test, y_pred_max):
+    #     print(a, b)
     print('Mean abs error is:', mean_absolute_error(y_test, y_pred_max))
 
 
