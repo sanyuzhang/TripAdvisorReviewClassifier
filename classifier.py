@@ -23,7 +23,13 @@ def create_feature_sets(data):
     feature_sets = [gen_features(item) for item in data]
     
     df = pd.DataFrame.from_dict(feature_sets, orient='columns', dtype='int')
-    df[TARGET] = df[TARGET] - 1
+    for col in FEATURE_COLS:
+        if col == TARGET:
+            df[TARGET] = df[TARGET] - 1
+        else:
+            _df = df[df[col] >= 0]
+            df[df[col] == -1] = _df[col].mean()
+
     X = df.drop(columns=[TARGET], axis=1, inplace=False)
     y = df[TARGET]
 
@@ -113,7 +119,7 @@ def train_gridcv(X_train, y_train):
 
 def save_grid_results(grid):
     # Print the best parameters found
-    f = open("Tuning.txt", "w")
+    f = open("tuning.txt", "w")
     f.write('Best params are: ' + str(grid.best_params_) + '\n')
     f.write('Best score is: ' + str(grid.best_score_) + '\n')
     f.close()
@@ -129,7 +135,7 @@ def load_data(filename):
 if __name__ == '__main__':
 
     # read corpus name from args
-    filename = 'data.json'
+    filename = 'small_data.json'
     data = load_data(filename)
 
     # split train and test set
@@ -142,4 +148,3 @@ if __name__ == '__main__':
         classifier = train_classifier(X_train, y_train)
         # evaluate
         evaluate_classifier(classifier, X_test, y_test)
-    
