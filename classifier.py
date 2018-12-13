@@ -134,7 +134,7 @@ def load_data(filename):
 
 if __name__ == '__main__':
 
-    # read corpus name from args
+    # sample classifier on small data
     filename = 'small_data.json'
     data = load_data(filename)
 
