@@ -121,8 +121,8 @@ def train_classifier(X_train, y_train):
     # specify your configurations as a dict
     params = {
         'boosting_type': 'gbdt',
-        'objective': 'multiclass',
-        'metric': 'multi_logloss',
+        'objective': 'regression',
+        'metric': 'mean_absolute_error',
         'num_class': 5,
         'num_leaves': 15,
         "num_threads": 4,
@@ -156,7 +156,7 @@ def evaluate_classifier(classifier, X_test, y_test):
 def train_gridcv(X_train, y_train):
     # Create classifier to use. Note that parameters have to be input manually
     classifier = lgb.LGBMClassifier(boosting_type= 'gbdt', 
-        objective = 'multiclass',
+        objective = 'regression',
         n_jobs = 4,
         is_unbalance = True,
         max_depth = -1,
@@ -176,7 +176,7 @@ def train_gridcv(X_train, y_train):
     
     # Run the grid
     print("Training GridSearchCV started...")
-    grid.fit(X_train, y_train, eval_metric='multi_logloss')
+    grid.fit(X_train, y_train, eval_metric='mean_absolute_error')
     print("Training GridSearchCV ended...")
 
     save_grid_results(grid)
