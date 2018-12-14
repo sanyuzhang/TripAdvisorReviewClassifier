@@ -75,9 +75,12 @@ def sentimental_from_review(reviews):
 #This cleaniness would include information from all reviews of the hotel
 def cleaniness_from_review(reviews):
     cleaniness = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
+    all_num_of_words = 0
     for review in reviews:
-        pass
-    return cleaniness
+        num_of_words = len(word_tokenize(review))
+        all_num_of_words += num_of_words
+        cleaniness += is_clean(review) * num_of_words
+    return cleaniness / all_num_of_words
 
 
 def room_from_review(reviews):
