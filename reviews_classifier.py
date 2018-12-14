@@ -8,7 +8,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
 
-IS_TUNING = True
+IS_TUNING = False
 LINE_SEPARATOR = '\n'
 
 TARGET = 'overall_ratingsource'
