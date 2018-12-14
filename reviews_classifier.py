@@ -6,7 +6,7 @@ import lightgbm as lgb
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
-
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 IS_TUNING = False
 LINE_SEPARATOR = '\n'
@@ -52,9 +52,12 @@ def gen_review_features(df):
         openfile = open(filename,  'r', encoding='utf8', errors='ignore')
         raw = openfile.read() #.decode('utf8', 'ignore')
         reviews = raw.split(LINE_SEPARATOR)
-
         # Add or fix feature extraction functions below
-        df.loc[df['doc_id'] == doc, 'sentimental'] = sentimental_from_review(reviews)
+        neg, neu, pos, compound = sentimental_from_review(reviews)
+        df.loc[df['doc_id'] == doc, 'neg'] = neg
+        df.loc[df['doc_id'] == doc, 'neu'] = neu
+        df.loc[df['doc_id'] == doc, 'pos'] = pos
+        df.loc[df['doc_id'] == doc, 'compound'] = compound
         df.loc[df['doc_id'] == doc, 'cleaniness'] = cleaniness_from_review(reviews)
         df.loc[df['doc_id'] == doc, 'room'] = room_from_review(reviews)
         df.loc[df['doc_id'] == doc, 'service'] = service_from_review(reviews)
@@ -66,10 +69,20 @@ def gen_review_features(df):
 
 
 def sentimental_from_review(reviews):
-    sentimental = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
+    neg = 0
+    neu = 0
+    pos = 0
+    compound = 0
+    num_of_chars = 0
+    sid = SentimentIntensityAnalyzer()
     for review in reviews:
-        pass
-    return sentimental
+        num_of_chars += len(review)
+        review_sentiment = sid.polarity_scores(review)
+        neg += review_sentiment['neg'] * len(review)
+        new += review_sentiment['neu'] * len(review)
+        pos += review_sentiment['pos'] * len(review)
+        compound += review_sentiment['compound'] * len(review)
+    return neg/num_of_chars, neu/num_of_chars, pos/num_of_chars, compound/num_of_chars
 
 
 def cleaniness_from_review(reviews):
