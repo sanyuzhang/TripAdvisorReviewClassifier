@@ -1,8 +1,3 @@
-"""
-
-Skeleton code. Note that this is not valid code due to all the dots.
-
-"""
 import json
 import nltk
 import numpy as np
