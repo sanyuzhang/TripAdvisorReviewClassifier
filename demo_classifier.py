@@ -119,7 +119,7 @@ def train_gridcv(X_train, y_train):
 
 def save_grid_results(grid):
     # Print the best parameters found
-    f = open("tuning.txt", "w")
+    f = open("demo_tuning.txt", "w")
     f.write('Best params are: ' + str(grid.best_params_) + '\n')
     f.write('Best score is: ' + str(grid.best_score_) + '\n')
     f.close()
