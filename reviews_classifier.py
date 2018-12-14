@@ -6,6 +6,7 @@ import lightgbm as lgb
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+from nltk import tokenize
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 IS_TUNING = False
@@ -73,16 +74,17 @@ def sentimental_from_review(reviews):
     neu = 0
     pos = 0
     compound = 0
-    num_of_chars = 0
+    num_of_words = 0
     sid = SentimentIntensityAnalyzer()
     for review in reviews:
-        num_of_chars += len(review)
-        review_sentiment = sid.polarity_scores(review)
-        neg += review_sentiment['neg'] * len(review)
-        new += review_sentiment['neu'] * len(review)
-        pos += review_sentiment['pos'] * len(review)
-        compound += review_sentiment['compound'] * len(review)
-    return neg/num_of_chars, neu/num_of_chars, pos/num_of_chars, compound/num_of_chars
+        tokenized_review = tokenize.sent_tokenize(review)
+        num_of_words += len(tokenized_review)
+        review_sentiment = sid.polarity_scores(tokenized_review)
+        neg += review_sentiment['neg'] * len(tokenized_review)
+        new += review_sentiment['neu'] * len(tokenized_review)
+        pos += review_sentiment['pos'] * len(tokenized_review)
+        compound += review_sentiment['compound'] * len(tokenized_review)
+    return neg/num_of_words, neu/num_of_words, pos/num_of_words, compound/num_of_words
 
 
 def cleaniness_from_review(reviews):
