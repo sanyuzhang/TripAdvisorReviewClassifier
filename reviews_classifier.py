@@ -72,6 +72,7 @@ def sentimental_from_review(reviews):
     return sentimental
 
 
+#This cleaniness would include information from all reviews of the hotel
 def cleaniness_from_review(reviews):
     cleaniness = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
     for review in reviews:
