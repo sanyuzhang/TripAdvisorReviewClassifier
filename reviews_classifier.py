@@ -13,7 +13,7 @@ LINE_SEPARATOR = '\n'
 
 TARGET = 'overall_ratingsource'
 # FEATURES = ['city', 'country', 'num_reviews']
-FEATURES = ['doc_id', 'city', 'country', 'num_reviews', 'sentimental', 'cleaniness', 'room', 'service', 'location', 'value', 'food']
+FEATURES = ['doc_id', 'city', 'country', 'num_reviews', 'neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food']
 
 
 def create_feature_sets(df):
@@ -47,7 +47,10 @@ def gen_review_features(df):
     fileroot = 'data/reviews/'
 
     # Add or fix features below
-    df['sentimental'] = 0
+    df['neg'] = 0
+    df['neu'] = 0
+    df['pos'] = 0
+    df['compound'] = 0
     df['cleaniness'] = 0
     df['room'] = 0
     df['service'] = 0
@@ -89,12 +92,12 @@ def sentimental_from_review(reviews):
     for review in reviews:
         tokenized_review = tokenize.sent_tokenize(review)
         num_of_words += len(tokenized_review)
-        review_sentiment = sid.polarity_scores(tokenized_review)
+        review_sentiment = sid.polarity_scores(review)
         neg += review_sentiment['neg'] * len(tokenized_review)
-        new += review_sentiment['neu'] * len(tokenized_review)
+        neu += review_sentiment['neu'] * len(tokenized_review)
         pos += review_sentiment['pos'] * len(tokenized_review)
         compound += review_sentiment['compound'] * len(tokenized_review)
-    return neg/num_of_words, neu/num_of_words, pos/num_of_words, compound/num_of_words
+    return neg / num_of_words, neu / num_of_words, pos / num_of_words, compound / num_of_words
 
 
 def cleaniness_from_review(reviews):
