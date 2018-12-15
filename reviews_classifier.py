@@ -17,10 +17,10 @@ TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
-ROOM_POS_ADJ = sf.find_synsets('spacious')
-ROOM_NEG_ADJ = sf.find_synsets('small')
-CLEAN_POS_ADJ = sf.find_synsets('clean')
-CLEAN_NEG_ADJ = sf.find_synsets('dirty')
+ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable', 'cozy', 'bright'])
+ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'narrow', 'uncomfortable', 'dark', 'cold'])
+CLEAN_POS_ADJ = sf.find_all_synsets(['clean', 'hygiene', 'cleanliness', 'tidy'])
+CLEAN_NEG_ADJ = sf.find_all_synsets(['untidy', 'dirty', 'muddled'])
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
