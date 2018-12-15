@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgb
 import synset_finder as sf
+from nltk import tokenize
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk import tokenize
 
 
 IS_TUNING = False
@@ -19,6 +19,7 @@ NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service'
 
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
+
 
 def create_feature_sets(df):
     # Create feature sets
@@ -80,7 +81,8 @@ def analyze_reviews(df, doc, reviews):
     sia = SentimentIntensityAnalyzer()
 
     for review in reviews:
-        num_of_words = len(tokenize.word_tokenize(review))
+        tokens = tokenize.word_tokenize(review)
+        num_of_words = len(tokens)
         all_num_of_words += num_of_words
 
         review_sentiment = sia.polarity_scores(review)
@@ -89,12 +91,12 @@ def analyze_reviews(df, doc, reviews):
         pos += review_sentiment['pos'] * num_of_words
         compound += review_sentiment['compound'] * num_of_words
         
-        cleaniness_list.append(is_clean(review) * num_of_words)
-        room_list.append(nice_room(review) * num_of_words)
-        service_list.append(nice_service(review) * num_of_words)
-        location_list.append(nice_location(review) * num_of_words)
-        value_list.append(nice_value(review) * num_of_words)
-        food_list.append(nice_food(review) * num_of_words)
+        cleaniness_list.append(is_clean(tokens, review_sentiment) * num_of_words)
+        room_list.append(is_nice_room(tokens, review_sentiment) * num_of_words)
+        service_list.append(is_nice_service(tokens, review_sentiment) * num_of_words)
+        location_list.append(is_nice_location(tokens, review_sentiment) * num_of_words)
+        value_list.append(is_nice_value(tokens, review_sentiment) * num_of_words)
+        food_list.append(is_nice_food(tokens, review_sentiment) * num_of_words)
 
     quality = (
         to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
@@ -128,28 +130,28 @@ def to_quality_pair(quality_lsit, normalize_val):
     return (np.mean(quality), np.var(quality))
 
 
-def is_clean(review):
+def is_clean(review_tokens, review_sentiment):
     return 0
 
 
-def nice_room(review):
+def is_nice_room(review_tokens, review_sentiment):
     return 0
 
 
-def nice_service(review):
+def is_nice_service(review_tokens, review_sentiment):
     return 0
 
 
-def nice_location(review):
+def is_nice_location(review_tokens, review_sentiment):
     return 0
 
 
-def nice_value(review):
+def is_nice_value(review_tokens, review_sentiment):
     return 0
 
 
-def nice_food(review):
-    for word in review:
+def is_nice_food(review_tokens, review_sentiment):
+    for word in review_tokens:
         if word in FOOD_NEG_ADJ:
             return -1
         elif word in FOOD_POS_ADJ:
@@ -244,18 +246,17 @@ def load_data(filename):
 if __name__ == '__main__':
 
     # Sample classifier on small data
-    # filename = 'data/hotels.csv'
-    # df = load_data(filename)
+    filename = 'data/hotels.csv'
+    df = load_data(filename)
 
-    # # Split train and test set
-    # X_train, X_test, y_train, y_test = create_feature_sets(df)
+    # Split train and test set
+    X_train, X_test, y_train, y_test = create_feature_sets(df)
 
-    # if IS_TUNING:
-    #     train_gridcv(X_train, y_train)
-    # else:
-    #     # Train classifier
-    #     classifier = train_classifier(X_train, y_train)
-    #     # Evaluate
-    #     evaluate_classifier(classifier, X_test, y_test)
+    if IS_TUNING:
+        train_gridcv(X_train, y_train)
+    else:
+        # Train classifier
+        classifier = train_classifier(X_train, y_train)
+        # Evaluate
+        evaluate_classifier(classifier, X_test, y_test)
 
-    print(FOOD_NEG_ADJ)
