@@ -16,7 +16,6 @@ TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
-
 def create_feature_sets(df):
     # Create feature sets
 
@@ -36,8 +35,8 @@ def create_feature_sets(df):
     #         _df = df[df[col] >= 0]
     #         df[df[col] == -1] = _df[col].mean()
 
-    features = FEATURES.extend(NEW_FEATURES)
-    X = df[features]
+    ALL_FEATURES = FEATURES + NEW_FEATURES
+    X = df[ALL_FEATURES]
     y = df[TARGET]
 
     return train_test_split(X, y, train_size=0.9, random_state=1)
@@ -60,14 +59,14 @@ def gen_review_features(df):
         reviews = openfile.read().split(LINE_SEPARATOR)
         openfile.close()
 
-        # Add or fix feature extraction functions below
-        neg, neu, pos, compound = sentimental_from_review(reviews)
+        # Add or fix feature extraction functions below, do not forget to update line 17
+        neg, neu, pos, compound = get_sentimental_from_review(reviews)
         df.loc[df['doc_id'] == doc, 'neg'] = neg
         df.loc[df['doc_id'] == doc, 'neu'] = neu
         df.loc[df['doc_id'] == doc, 'pos'] = pos
         df.loc[df['doc_id'] == doc, 'compound'] = compound
 
-        quality = get_quality(reviews)
+        quality = get_quality_from_review(reviews)
         df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
         df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
         df.loc[df['doc_id'] == doc, 'room'] = quality[1][0]
@@ -84,7 +83,7 @@ def gen_review_features(df):
     return df
 
 
-def sentimental_from_review(reviews):
+def get_sentimental_from_review(reviews):
     neg, neu, pos, compound, num_of_words = 0, 0, 0, 0, 0
     sid = SentimentIntensityAnalyzer()
     for review in reviews:
@@ -97,7 +96,7 @@ def sentimental_from_review(reviews):
         compound += review_sentiment['compound'] * len(tokenized_review)
     return neg / num_of_words, neu / num_of_words, pos / num_of_words, compound / num_of_words
 
-def get_quality(reviews):
+def get_quality_from_review(reviews):
     cleaniness_list, room_list, service_list, location_list, value_list, food_list = [], [], [], [], [], []
     all_num_of_words = 0
     for review in reviews:
