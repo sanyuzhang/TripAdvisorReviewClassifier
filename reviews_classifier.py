@@ -17,9 +17,13 @@ TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
-SERVICE_POS_ADJ = sf.find_synsets('helpful').union(sf.find_synsets('polite')).union(sf.find_synsets('efficient')).union(sf.find_synsets('friendly')).union(sf.find_synsets('professional')).union(sf.find_synsets('gentle')).union(sf.find_synsets('well-mannered')).union(sf.find_synsets('kind')).union(sf.find_synsets('adequate'))
-SERVICE_NEG_ADJ = sf.find_synsets('unhelpful').union(sf.find_synsets('unfriendly')).union(sf.find_synsets('unpolite')).union(sf.find_synsets('ineffective')).union(sf.find_synsets('lazy')).union(sf.find_synsets('inadequate')).union(sf.find_synsets('thoughtless')).union(sf.find_synsets('unkind')).union(sf.find_synsets('inexperienced'))
+SERVICE_POS_ADJ = sf.find_all_synsets(['helpful', 'polite', 'efficient', 'friendly', 'professional', 'gentle', 'well-mannered', 'kind', 'adequate'])
+SERVICE_NEG_ADJ = sf.find_all_synsets(['unhelpful', 'impolite', 'ineffective', 'unfriendly', 'lazy', 'thoughtless', 'unkind', 'inexperienced'])
 SERVICE_NEG_ADJ.discard('short')
+ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable', 'cozy', 'bright'])
+ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'narrow', 'uncomfortable', 'dark', 'cold'])
+CLEAN_POS_ADJ = sf.find_all_synsets(['clean', 'hygiene', 'cleanliness', 'tidy'])
+CLEAN_NEG_ADJ = sf.find_all_synsets(['untidy', 'dirty', 'muddled'])
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
@@ -134,10 +138,20 @@ def to_quality_pair(quality_lsit, normalize_val):
 
 
 def is_clean(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in CLEAN_NEG_ADJ:
+            return -1
+        elif word in CLEAN_POS_ADJ:
+            return 1
     return 0
 
 
 def is_nice_room(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in ROOM_NEG_ADJ:
+            return -1
+        elif word in ROOM_POS_ADJ:
+            return 1
     return 0
 
 
