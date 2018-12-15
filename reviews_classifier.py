@@ -53,6 +53,12 @@ def gen_review_features(df):
     df['location'] = 0
     df['value'] = 0
     df['food'] = 0
+    df['cleaniness_var'] = 0
+    df['room_var'] = 0
+    df['service_var'] = 0
+    df['location_var'] = 0
+    df['value_var'] = 0
+    df['food_var'] = 0
 
     # Iterate review docs
     for doc in df['doc_id']:
@@ -64,12 +70,19 @@ def gen_review_features(df):
 
         # Add or fix feature extraction functions below
         df.loc[df['doc_id'] == doc, 'sentimental'] = sentimental_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'cleaniness'] = cleaniness_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'room'] = room_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'service'] = service_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'location'] = location_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'value'] = value_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'food'] = food_from_review(reviews)
+        quality = get_quality(reviews)
+        df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
+        df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
+        df.loc[df['doc_id'] == doc, 'room'] = quality[1][0]
+        df.loc[df['doc_id'] == doc, 'room_var'] = quality[1][1]
+        df.loc[df['doc_id'] == doc, 'service'] = quality[2][0]
+        df.loc[df['doc_id'] == doc, 'service_var'] = quality[2][1]
+        df.loc[df['doc_id'] == doc, 'location'] = quality[3][0]
+        df.loc[df['doc_id'] == doc, 'location_var'] = quality[3][1]
+        df.loc[df['doc_id'] == doc, 'value'] = quality[4][0]
+        df.loc[df['doc_id'] == doc, 'value_var'] = quality[4][1]
+        df.loc[df['doc_id'] == doc, 'food'] = quality[5][0]
+        df.loc[df['doc_id'] == doc, 'food_var'] = quality[5][1]
 
     return df
 
@@ -80,7 +93,7 @@ def sentimental_from_review(reviews):
         pass
     return sentimental
 
-def quality(reviews):
+def get_quality(reviews):
     cleaniness_list = []
     room_list = []
     service_list = []
