@@ -72,24 +72,33 @@ def sentimental_from_review(reviews):
     return sentimental
 
 def quality(reviews):
-    cleaniness = 0
-    room = 0
-    service = 0
-    location = 0
-    value = 0
-    food = 0
+    cleaniness_list = []
+    room_list = []
+    service_list = []
+    location_list = []
+    value_list = []
+    food_list = []
     all_num_of_words = 0
     for review in reviews:
         num_of_words = len(word_tokenize(review))
         all_num_of_words += num_of_words
-        cleaniness += is_clean(review) * num_of_words
-        room += nice_room(review) * num_of_words
-        service += nice_service(review) * num_of_words
-        location += nice_location(review) * num_of_words
-        value += nice_value(review) * num_of_words
-        food += nice_food(review) * num_of_words
-    return (cleaniness / all_num_of_words, room / all_num_of_words, service / all_num_of_words \
-        location / all_num_of_words, value / all_num_of_words, food / all_num_of_words)
+        cleaniness_list.append(is_clean(review) * num_of_words)
+        room_list.append(nice_room(review) * num_of_words)
+        service_list.append(nice_service(review) * num_of_words)
+        location_list.append(nice_location(review) * num_of_words)
+        value_list.append(nice_value(review) * num_of_words)
+        food_list.append(nice_food(review) * num_of_words)
+    return (to_quality_pair(cleaniness_list, all_num_of_words), \
+        to_quality_pair(room_list, all_num_of_words),\
+        to_quality_pair(service_list, all_num_of_words),\
+        to_quality_pair(location_list, all_num_of_words),\
+        to_quality_pair(value_list, all_num_of_words),\
+        to_quality_pair(food_list, all_num_of_words)
+        )
+
+def to_quality_pair(quality_lsit, normalize_val):
+    quality = np.array(quality_lsit) / normalize_val
+    return (np.mean(quality), np.var(quality))
 
 def is_clean(review):
     return 0
