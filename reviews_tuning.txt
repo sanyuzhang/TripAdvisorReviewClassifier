@@ -1,2 +1,2 @@
-Best params are: {'colsample_bytree': 1, 'learning_rate': 0.005, 'n_estimators': 500, 'num_leaves': 15}
-Best score is: -0.5620414787558886
+Best params are: {'colsample_bytree': 1, 'learning_rate': 0.005, 'n_estimators': 1000, 'num_leaves': 7}
+Best score is: -0.5218034044877504
