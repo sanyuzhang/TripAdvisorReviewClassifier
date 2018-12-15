@@ -71,51 +71,43 @@ def sentimental_from_review(reviews):
         pass
     return sentimental
 
-
-#This cleaniness would include information from all reviews of the hotel
-def cleaniness_from_review(reviews):
-    cleaniness = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
+def quality(reviews):
+    cleaniness = 0
+    room = 0
+    service = 0
+    location = 0
+    value = 0
+    food = 0
     all_num_of_words = 0
     for review in reviews:
         num_of_words = len(word_tokenize(review))
         all_num_of_words += num_of_words
         cleaniness += is_clean(review) * num_of_words
-    return cleaniness / all_num_of_words
+        room += nice_room(review) * num_of_words
+        service += nice_service(review) * num_of_words
+        location += nice_location(review) * num_of_words
+        value += nice_value(review) * num_of_words
+        food += nice_food(review) * num_of_words
+    return (cleaniness / all_num_of_words, room / all_num_of_words, service / all_num_of_words \
+        location / all_num_of_words, value / all_num_of_words, food / all_num_of_words)
 
+def is_clean(review):
+    return 0
 
-def room_from_review(reviews):
-    room = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
-    for review in reviews:
-        pass
-    return room
+def nice_room(review):
+    return 0
 
+def nice_service(review):
+    return 0
 
-def service_from_review(reviews):
-    service = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
-    for review in reviews:
-        pass
-    return service
+def nice_location(review):
+    return 0
 
+def nice_value(review):
+    return 0
 
-def location_from_review(reviews):
-    location = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
-    for review in reviews:
-        pass
-    return location
-
-
-def value_from_review(reviews):
-    value = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
-    for review in reviews:
-        pass
-    return value
-
-
-def food_from_review(reviews):
-    food = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
-    for review in reviews:
-        pass
-    return food
+def nice_food(review):
+    return 0
 
 
 def train_classifier(X_train, y_train):
