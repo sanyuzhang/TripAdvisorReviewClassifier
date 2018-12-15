@@ -5,14 +5,15 @@ import lightgbm as lgb
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
-
+from nltk import tokenize
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 IS_TUNING = False
 LINE_SEPARATOR = '\n'
 
 TARGET = 'overall_ratingsource'
 # FEATURES = ['city', 'country', 'num_reviews']
-FEATURES = ['doc_id', 'city', 'country', 'num_reviews', 'sentimental', 'cleaniness', 'room', 'service', 'location', 'value', 'food']
+FEATURES = ['doc_id', 'city', 'country', 'num_reviews', 'neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
 
 def create_feature_sets(df):
@@ -46,7 +47,10 @@ def gen_review_features(df):
     fileroot = 'data/reviews/'
 
     # Add or fix features below
-    df['sentimental'] = 0
+    df['neg'] = 0
+    df['neu'] = 0
+    df['pos'] = 0
+    df['compound'] = 0
     df['cleaniness'] = 0
     df['room'] = 0
     df['service'] = 0
@@ -69,7 +73,12 @@ def gen_review_features(df):
         openfile.close()
 
         # Add or fix feature extraction functions below
-        df.loc[df['doc_id'] == doc, 'sentimental'] = sentimental_from_review(reviews)
+        neg, neu, pos, compound = sentimental_from_review(reviews)
+        df.loc[df['doc_id'] == doc, 'neg'] = neg
+        df.loc[df['doc_id'] == doc, 'neu'] = neu
+        df.loc[df['doc_id'] == doc, 'pos'] = pos
+        df.loc[df['doc_id'] == doc, 'compound'] = compound
+
         quality = get_quality(reviews)
         df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
         df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
@@ -88,10 +97,21 @@ def gen_review_features(df):
 
 
 def sentimental_from_review(reviews):
-    sentimental = 0 # neutral: 0, negative: -1, positive: 1. Fractions are also allowed.
+    neg = 0
+    neu = 0
+    pos = 0
+    compound = 0
+    num_of_words = 0
+    sid = SentimentIntensityAnalyzer()
     for review in reviews:
-        pass
-    return sentimental
+        tokenized_review = tokenize.sent_tokenize(review)
+        num_of_words += len(tokenized_review)
+        review_sentiment = sid.polarity_scores(review)
+        neg += review_sentiment['neg'] * len(tokenized_review)
+        neu += review_sentiment['neu'] * len(tokenized_review)
+        pos += review_sentiment['pos'] * len(tokenized_review)
+        compound += review_sentiment['compound'] * len(tokenized_review)
+    return neg / num_of_words, neu / num_of_words, pos / num_of_words, compound / num_of_words
 
 def get_quality(reviews):
     cleaniness_list = []
