@@ -35,6 +35,10 @@ def create_feature_sets(df):
     #         _df = df[df[col] >= 0]
     #         df[df[col] == -1] = _df[col].mean()
 
+    df[df == np.Inf] = np.NaN
+    df[df == np.NINF] = np.NaN
+    df.fillna(0, inplace=True)
+
     ALL_FEATURES = FEATURES + NEW_FEATURES
     X = df[ALL_FEATURES]
     y = df[TARGET]
@@ -59,81 +63,86 @@ def gen_review_features(df):
         reviews = openfile.read().split(LINE_SEPARATOR)
         openfile.close()
 
-        # Add or fix feature extraction functions below, do not forget to update line 17
-        neg, neu, pos, compound = get_sentimental_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'neg'] = neg
-        df.loc[df['doc_id'] == doc, 'neu'] = neu
-        df.loc[df['doc_id'] == doc, 'pos'] = pos
-        df.loc[df['doc_id'] == doc, 'compound'] = compound
-
-        quality = get_quality_from_review(reviews)
-        df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
-        df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
-        df.loc[df['doc_id'] == doc, 'room'] = quality[1][0]
-        df.loc[df['doc_id'] == doc, 'room_var'] = quality[1][1]
-        df.loc[df['doc_id'] == doc, 'service'] = quality[2][0]
-        df.loc[df['doc_id'] == doc, 'service_var'] = quality[2][1]
-        df.loc[df['doc_id'] == doc, 'location'] = quality[3][0]
-        df.loc[df['doc_id'] == doc, 'location_var'] = quality[3][1]
-        df.loc[df['doc_id'] == doc, 'value'] = quality[4][0]
-        df.loc[df['doc_id'] == doc, 'value_var'] = quality[4][1]
-        df.loc[df['doc_id'] == doc, 'food'] = quality[5][0]
-        df.loc[df['doc_id'] == doc, 'food_var'] = quality[5][1]
+        df = analyze_reviews(df, doc, reviews)
 
     return df
 
 
-def get_sentimental_from_review(reviews):
-    neg, neu, pos, compound, num_of_words = 0, 0, 0, 0, 0
-    sid = SentimentIntensityAnalyzer()
-    for review in reviews:
-        tokenized_review = tokenize.sent_tokenize(review)
-        num_of_words += len(tokenized_review)
-        review_sentiment = sid.polarity_scores(review)
-        neg += review_sentiment['neg'] * len(tokenized_review)
-        neu += review_sentiment['neu'] * len(tokenized_review)
-        pos += review_sentiment['pos'] * len(tokenized_review)
-        compound += review_sentiment['compound'] * len(tokenized_review)
-    return neg / num_of_words, neu / num_of_words, pos / num_of_words, compound / num_of_words
+def analyze_reviews(df, doc, reviews):
+    # Add or fix feature extraction functions below, do not forget to update line 17
 
-def get_quality_from_review(reviews):
     cleaniness_list, room_list, service_list, location_list, value_list, food_list = [], [], [], [], [], []
-    all_num_of_words = 0
+    neg, neu, pos, compound, num_of_words, all_num_of_words = 0, 0, 0, 0, 0, 0
+    sia = SentimentIntensityAnalyzer()
+
     for review in reviews:
         num_of_words = len(tokenize.word_tokenize(review))
         all_num_of_words += num_of_words
+
+        review_sentiment = sia.polarity_scores(review)
+        neg += review_sentiment['neg'] * num_of_words
+        neu += review_sentiment['neu'] * num_of_words
+        pos += review_sentiment['pos'] * num_of_words
+        compound += review_sentiment['compound'] * num_of_words
+        
         cleaniness_list.append(is_clean(review) * num_of_words)
         room_list.append(nice_room(review) * num_of_words)
         service_list.append(nice_service(review) * num_of_words)
         location_list.append(nice_location(review) * num_of_words)
         value_list.append(nice_value(review) * num_of_words)
         food_list.append(nice_food(review) * num_of_words)
-    return (to_quality_pair(cleaniness_list, all_num_of_words), \
-        to_quality_pair(room_list, all_num_of_words),\
-        to_quality_pair(service_list, all_num_of_words),\
-        to_quality_pair(location_list, all_num_of_words),\
-        to_quality_pair(value_list, all_num_of_words),\
-        to_quality_pair(food_list, all_num_of_words)
-        )
+
+    quality = (
+        to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
+        to_quality_pair(service_list, all_num_of_words), to_quality_pair(location_list, all_num_of_words), 
+        to_quality_pair(value_list, all_num_of_words), to_quality_pair(food_list, all_num_of_words)
+    )
+
+    df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
+
+    df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
+    df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
+    df.loc[df['doc_id'] == doc, 'room'] = quality[1][0]
+    df.loc[df['doc_id'] == doc, 'room_var'] = quality[1][1]
+    df.loc[df['doc_id'] == doc, 'service'] = quality[2][0]
+    df.loc[df['doc_id'] == doc, 'service_var'] = quality[2][1]
+    df.loc[df['doc_id'] == doc, 'location'] = quality[3][0]
+    df.loc[df['doc_id'] == doc, 'location_var'] = quality[3][1]
+    df.loc[df['doc_id'] == doc, 'value'] = quality[4][0]
+    df.loc[df['doc_id'] == doc, 'value_var'] = quality[4][1]
+    df.loc[df['doc_id'] == doc, 'food'] = quality[5][0]
+    df.loc[df['doc_id'] == doc, 'food_var'] = quality[5][1]
+
+    return df
+
 
 def to_quality_pair(quality_lsit, normalize_val):
     quality = np.array(quality_lsit) / normalize_val
     return (np.mean(quality), np.var(quality))
 
+
 def is_clean(review):
     return 0
+
 
 def nice_room(review):
     return 0
 
+
 def nice_service(review):
     return 0
+
 
 def nice_location(review):
     return 0
 
+
 def nice_value(review):
     return 0
+
 
 def nice_food(review):
     return 0
