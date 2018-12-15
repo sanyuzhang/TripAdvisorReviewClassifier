@@ -2,6 +2,7 @@ import nltk
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
+import synset_finder as sf
 from nltk import tokenize
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
@@ -15,6 +16,13 @@ LINE_SEPARATOR = '\n'
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+
+ROOM_POS_ADJ = sf.find_synsets('spacious')
+ROOM_NEG_ADJ = sf.find_synsets('small')
+CLEAN_POS_ADJ = sf.find_synsets('clean')
+CLEAN_NEG_ADJ = sf.find_synsets('dirty')
+FOOD_POS_ADJ = sf.find_synsets('delicious')
+FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
 
 def create_feature_sets(df):
@@ -127,10 +135,20 @@ def to_quality_pair(quality_lsit, normalize_val):
 
 
 def is_clean(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in CLEAN_NEG_ADJ:
+            return -1
+        elif word in CLEAN_POS_ADJ:
+            return 1
     return 0
 
 
 def is_nice_room(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in ROOM_NEG_ADJ:
+            return -1
+        elif word in ROOM_POS_ADJ:
+            return 1
     return 0
 
 
@@ -147,6 +165,11 @@ def is_nice_value(review_tokens, review_sentiment):
 
 
 def is_nice_food(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in FOOD_NEG_ADJ:
+            return -1
+        elif word in FOOD_POS_ADJ:
+            return 1
     return 0
 
 
@@ -250,3 +273,4 @@ if __name__ == '__main__':
         classifier = train_classifier(X_train, y_train)
         # Evaluate
         evaluate_classifier(classifier, X_test, y_test)
+
