@@ -2,6 +2,7 @@ import nltk
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
+import synset_finder as sf
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
@@ -15,6 +16,9 @@ LINE_SEPARATOR = '\n'
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+
+FOOD_POS_ADJ = sf.find_synsets('delicious')
+FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
 def create_feature_sets(df):
     # Create feature sets
@@ -145,6 +149,11 @@ def nice_value(review):
 
 
 def nice_food(review):
+    for word in review:
+        if word in FOOD_NEG_ADJ:
+            return -1
+        elif word in FOOD_POS_ADJ:
+            return 1
     return 0
 
 
@@ -235,16 +244,18 @@ def load_data(filename):
 if __name__ == '__main__':
 
     # Sample classifier on small data
-    filename = 'data/hotels.csv'
-    df = load_data(filename)
+    # filename = 'data/hotels.csv'
+    # df = load_data(filename)
 
-    # Split train and test set
-    X_train, X_test, y_train, y_test = create_feature_sets(df)
+    # # Split train and test set
+    # X_train, X_test, y_train, y_test = create_feature_sets(df)
 
-    if IS_TUNING:
-        train_gridcv(X_train, y_train)
-    else:
-        # Train classifier
-        classifier = train_classifier(X_train, y_train)
-        # Evaluate
-        evaluate_classifier(classifier, X_test, y_test)
+    # if IS_TUNING:
+    #     train_gridcv(X_train, y_train)
+    # else:
+    #     # Train classifier
+    #     classifier = train_classifier(X_train, y_train)
+    #     # Evaluate
+    #     evaluate_classifier(classifier, X_test, y_test)
+
+    print(FOOD_NEG_ADJ)
