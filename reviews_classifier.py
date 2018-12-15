@@ -2,11 +2,11 @@ import nltk
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
+from nltk import tokenize
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk import tokenize
 
 
 IS_TUNING = False
@@ -15,6 +15,7 @@ LINE_SEPARATOR = '\n'
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+
 
 def create_feature_sets(df):
     # Create feature sets
@@ -76,7 +77,8 @@ def analyze_reviews(df, doc, reviews):
     sia = SentimentIntensityAnalyzer()
 
     for review in reviews:
-        num_of_words = len(tokenize.word_tokenize(review))
+        tokens = tokenize.word_tokenize(review)
+        num_of_words = len(tokens)
         all_num_of_words += num_of_words
 
         review_sentiment = sia.polarity_scores(review)
@@ -85,12 +87,12 @@ def analyze_reviews(df, doc, reviews):
         pos += review_sentiment['pos'] * num_of_words
         compound += review_sentiment['compound'] * num_of_words
         
-        cleaniness_list.append(is_clean(review) * num_of_words)
-        room_list.append(nice_room(review) * num_of_words)
-        service_list.append(nice_service(review) * num_of_words)
-        location_list.append(nice_location(review) * num_of_words)
-        value_list.append(nice_value(review) * num_of_words)
-        food_list.append(nice_food(review) * num_of_words)
+        cleaniness_list.append(is_clean(tokens, review_sentiment) * num_of_words)
+        room_list.append(is_nice_room(tokens, review_sentiment) * num_of_words)
+        service_list.append(is_nice_service(tokens, review_sentiment) * num_of_words)
+        location_list.append(is_nice_location(tokens, review_sentiment) * num_of_words)
+        value_list.append(is_nice_value(tokens, review_sentiment) * num_of_words)
+        food_list.append(is_nice_food(tokens, review_sentiment) * num_of_words)
 
     quality = (
         to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
@@ -124,27 +126,27 @@ def to_quality_pair(quality_lsit, normalize_val):
     return (np.mean(quality), np.var(quality))
 
 
-def is_clean(review):
+def is_clean(review_tokens, review_sentiment):
     return 0
 
 
-def nice_room(review):
+def is_nice_room(review_tokens, review_sentiment):
     return 0
 
 
-def nice_service(review):
+def is_nice_service(review_tokens, review_sentiment):
     return 0
 
 
-def nice_location(review):
+def is_nice_location(review_tokens, review_sentiment):
     return 0
 
 
-def nice_value(review):
+def is_nice_value(review_tokens, review_sentiment):
     return 0
 
 
-def nice_food(review):
+def is_nice_food(review_tokens, review_sentiment):
     return 0
 
 
