@@ -17,6 +17,9 @@ TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
+SERVICE_POS_ADJ = sf.find_synsets('helpful').union(sf.find_synsets('polite')).union(sf.find_synsets('efficient')).union(sf.find_synsets('friendly')).union(sf.find_synsets('professional')).union(sf.find_synsets('gentle')).union(sf.find_synsets('well-mannered')).union(sf.find_synsets('kind')).union(sf.find_synsets('adequate'))
+SERVICE_NEG_ADJ = sf.find_synsets('unhelpful').union(sf.find_synsets('unfriendly')).union(sf.find_synsets('unpolite')).union(sf.find_synsets('ineffective')).union(sf.find_synsets('lazy')).union(sf.find_synsets('inadequate')).union(sf.find_synsets('thoughtless')).union(sf.find_synsets('unkind')).union(sf.find_synsets('inexperienced'))
+SERVICE_NEG_ADJ.discard('short')
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
@@ -139,6 +142,11 @@ def is_nice_room(review_tokens, review_sentiment):
 
 
 def is_nice_service(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in SERVICE_NEG_ADJ:
+            return -1
+        elif word in SERVICE_POS_ADJ:
+            return 1
     return 0
 
 
@@ -259,4 +267,7 @@ if __name__ == '__main__':
         classifier = train_classifier(X_train, y_train)
         # Evaluate
         evaluate_classifier(classifier, X_test, y_test)
+
+    # print(SERVICE_POS_ADJ)
+    # print(SERVICE_NEG_ADJ)
 
