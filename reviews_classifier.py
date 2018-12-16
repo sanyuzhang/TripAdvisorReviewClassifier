@@ -17,16 +17,34 @@ TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
-SERVICE_POS_ADJ = sf.find_all_synsets(['helpful', 'polite', 'efficient', 'friendly', 'professional', 'gentle', 'well-mannered', 'kind', 'adequate'])
-SERVICE_NEG_ADJ = sf.find_all_synsets(['unhelpful', 'impolite', 'ineffective', 'unfriendly', 'lazy', 'thoughtless', 'unkind', 'inexperienced'])
-SERVICE_NEG_ADJ.discard('short')
-ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable', 'cozy', 'bright'])
-ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'narrow', 'uncomfortable', 'dark', 'cold'])
-CLEAN_POS_ADJ = sf.find_all_synsets(['clean', 'hygiene', 'cleanliness', 'tidy'])
-CLEAN_NEG_ADJ = sf.find_all_synsets(['untidy', 'dirty', 'muddled'])
+#SERVICE
+SERVICE = {'staff', 'service'}
+SERVICE_POS_ADJ = sf.find_all_synsets(['nice', 'excellent', 'good', 'great', 'helpful', 'polite'])
+SERVICE_NEG_ADJ = sf.find_all_synsets(['bad', 'unpleasent', 'disordered', 'unhelpful', 'impolite', 'unfriendly'])
+
+#ROOM
+ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable'])
+ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'uncomfortable'])
+
+#CLEANLINESS
+CLEAN_POS_ADJ = sf.find_all_synsets(['clean'])
+CLEAN_NEG_ADJ = sf.find_all_synsets(['dirty'])
+
+#FOOD
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
+# Location
+LOCA = ['location', 'view']
+LOCA_POS_ADJ = sf.find_all_synsets(['good', 'safe', 'close', 'beautiful'])
+LOCA_NEG_ADJ = sf.find_all_synsets(['far', 'terrible'])
+
+# Value
+POS_VALUE = sf.find_synsets('affordable')
+NEG_VALUE = sf.find_synsets('expensive')
+VALUE = {'price', 'value'}
+VALUE_POS_ADJ = sf.find_all_synsets(['good', 'reasonable'])
+VALUE_NEG_ADJ = sf.find_synsets('high')
 
 def create_feature_sets(df):
     # Create feature sets
@@ -156,19 +174,55 @@ def is_nice_room(review_tokens, review_sentiment):
 
 
 def is_nice_service(review_tokens, review_sentiment):
-    for word in review_tokens:
-        if word in SERVICE_NEG_ADJ:
-            return -1
-        elif word in SERVICE_POS_ADJ:
+    # for word in review_tokens:
+    #     if word in SERVICE_NEG:
+    #         return -1
+    #     elif word in SERVICE_POS:
+    #         return 1
+    for (x, y) in list(nltk.bigrams(review_tokens)):
+        if y in SERVICE and x in SERVICE_POS_ADJ:
             return 1
+        elif y in SERVICE and x in SERVICE_NEG_ADJ:
+            return -1
     return 0
 
 
 def is_nice_location(review_tokens, review_sentiment):
+    for (x, y) in list(nltk.bigrams(review_tokens)):
+        try:
+            if y in LOCA and x in LOCA_POS_ADJ:
+                return 1
+            elif y in LOCA and x in LOCA_NEG_ADJ:
+                return -1
+        except StopIteration:
+            return
+    for (x, y, z) in list(nltk.trigrams(review_tokens)):
+        try:
+            if x in LOCA and z in LOCA_POS_ADJ:
+                return 1
+            elif x in LOCA and z in LOCA_NEG_ADJ:
+                return -1
+        except StopIteration:
+            return
+    # for word in review_tokens:
+    #     if word in LOCA_POS_ADJ:
+    #         return 1
+    #     elif word in LOCA_NEG_ADJ:
+    #         return -1
     return 0
 
 
 def is_nice_value(review_tokens, review_sentiment):
+    for word in review_tokens:
+        if word in POS_VALUE:
+            return 1
+        elif word in NEG_VALUE:
+            return -1
+    for (x, y) in list(nltk.bigrams(review_tokens)):
+        if y in VALUE and x in VALUE_POS_ADJ:
+            return 1
+        elif y in VALUE and x in VALUE_NEG_ADJ:
+            return -1
     return 0
 
 
@@ -282,6 +336,7 @@ if __name__ == '__main__':
         # Evaluate
         evaluate_classifier(classifier, X_test, y_test)
 
-    # print(SERVICE_POS_ADJ)
-    # print(SERVICE_NEG_ADJ)
+    # print(SERVICE)
+    # print(POS_SERVICE)
+    # print(VALUE_NEG_ADJ)
 
