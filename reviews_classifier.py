@@ -26,7 +26,7 @@ FULL_PROCESS = 'full'
 
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
-NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleanliness', 'room', 'service', 'location', 'value', 'food', 'cleanliness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+NEW_FEATURES = ['total_word_length', 'neg', 'neu', 'pos', 'compound', 'cleanliness', 'room', 'service', 'location', 'value', 'food', 'cleanliness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
 #SERVICE
 SERVICE_KEYWORDS = {'staff', 'staffs', 'service'}
@@ -121,7 +121,7 @@ def analyze_reviews(df, doc, reviews):
     # Add or fix feature extraction functions below, do not forget to update line 17
 
     cleanliness_list, room_list, service_list, location_list, value_list, food_list = [], [], [], [], [], []
-    neg, neu, pos, compound, num_of_words, all_num_of_words = 0, 0, 0, 0, 0, 0
+    total_word_length, neg, neu, pos, compound, num_of_words, all_num_of_words = 0, 0, 0, 0, 0, 0, 0
     sia = SentimentIntensityAnalyzer()
 
     for review in reviews:
@@ -151,10 +151,12 @@ def analyze_reviews(df, doc, reviews):
         to_quality_pair(value_list, all_num_of_words), to_quality_pair(food_list, all_num_of_words)
     )
 
-    # df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
-    # df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
-    # df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
-    # df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'total_word_length'] = all_num_of_words
+
+    df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
+    df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
 
     df.loc[df['doc_id'] == doc, 'cleanliness'] = quality[0][0]
     df.loc[df['doc_id'] == doc, 'cleanliness_var'] = quality[0][1]
