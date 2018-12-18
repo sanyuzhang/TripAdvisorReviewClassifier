@@ -71,6 +71,7 @@ def create_feature_sets(df):
     else:
         # Remove the hotels with num_of_reviews < 0
         df = df[df['num_reviews'] >= 0]
+        df = df[df['overall_ratingsource'] >= 0]
 
         # Generate features
         df = gen_review_features(df)
@@ -187,12 +188,11 @@ def is_clean(tokens, bgrams, tgrams, review_sentiment):
 
 
 def is_nice_room(tokens, bgrams, tgrams, review_sentiment):
-    for (x, y) in bgrams:
-        for word in tokens:
-            if word in ROOM_POS_ADJ:
-                return 1
-            elif word in ROOM_NEG_ADJ:
-                return -1
+    for word in tokens:
+        if word in ROOM_POS_ADJ:
+            return 1
+        elif word in ROOM_NEG_ADJ:
+            return -1
     return 0
 
 
