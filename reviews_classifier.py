@@ -242,10 +242,10 @@ def train_classifier(X_train, y_train):
         'num_leaves': 15,
         "num_threads": 4,
         'learning_rate': 0.005,
-        'feature_fraction': 0.4,
+        'feature_fraction': 1,
         'bagging_fraction': 0.6,
-        'bagging_freq': 5,
-        'n_estimators': 1000,
+        'bagging_freq': 10,
+        'n_estimators': 900,
         'verbose': 0
     }
 
