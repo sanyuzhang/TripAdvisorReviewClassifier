@@ -1,3 +1,4 @@
+import sys
 import nltk
 import numpy as np
 import pandas as pd
@@ -300,8 +301,8 @@ def train_gridcv(X_train, y_train):
 def save_grid_results(grid):
     # Print the best parameters found
     f = open("reviews_tuning.txt", "w")
-    f.write('Best params are: ' + str(grid.best_params_) + '\n')
-    f.write('Best score is: ' + str(grid.best_score_) + '\n')
+    f.write('Best params are: ' + str(grid.best_params_) + LINE_SEPARATOR)
+    f.write('Best score is: ' + str(grid.best_score_) + LINE_SEPARATOR)
     f.close()
 
 
@@ -311,6 +312,10 @@ def load_data(filename):
 
 
 if __name__ == '__main__':
+
+    # Get args from command input
+    if len(sys.argv) > 1 and (sys.argv[1] == 'True' or sys.argv[1] == 'False'):
+        IS_PROCESSED_DATA = sys.argv[1]
 
     # Sample classifier on small data
     filename = 'data/hotels.csv'
@@ -326,4 +331,3 @@ if __name__ == '__main__':
         classifier = train_classifier(X_train, y_train)
         # Evaluate
         evaluate_classifier(classifier, X_test, y_test)
-
