@@ -15,7 +15,8 @@ LINE_SEPARATOR = '\n'
 
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
-NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+# NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+NEW_FEATURES = ['cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
 #SERVICE
 SERVICE = {'staff', 'service'}
@@ -129,10 +130,10 @@ def analyze_reviews(df, doc, reviews):
         to_quality_pair(value_list, all_num_of_words), to_quality_pair(food_list, all_num_of_words)
     )
 
-    df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
-    df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
-    df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
-    df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
 
     df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
     df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
@@ -174,11 +175,6 @@ def is_nice_room(review_tokens, review_sentiment):
 
 
 def is_nice_service(review_tokens, review_sentiment):
-    # for word in review_tokens:
-    #     if word in SERVICE_NEG:
-    #         return -1
-    #     elif word in SERVICE_POS:
-    #         return 1
     for (x, y) in list(nltk.bigrams(review_tokens)):
         if y in SERVICE and x in SERVICE_POS_ADJ:
             return 1
@@ -204,11 +200,6 @@ def is_nice_location(review_tokens, review_sentiment):
                 return -1
         except StopIteration:
             return
-    # for word in review_tokens:
-    #     if word in LOCA_POS_ADJ:
-    #         return 1
-    #     elif word in LOCA_NEG_ADJ:
-    #         return -1
     return 0
 
 
@@ -227,11 +218,11 @@ def is_nice_value(review_tokens, review_sentiment):
 
 
 def is_nice_food(review_tokens, review_sentiment):
-    for word in review_tokens:
-        if word in FOOD_NEG_ADJ:
-            return -1
-        elif word in FOOD_POS_ADJ:
-            return 1
+    # for word in review_tokens:
+    #     if word in FOOD_NEG_ADJ:
+    #         return -1
+    #     elif word in FOOD_POS_ADJ:
+    #         return 1
     return 0
 
 
@@ -338,5 +329,5 @@ if __name__ == '__main__':
 
     # print(SERVICE)
     # print(POS_SERVICE)
-    # print(VALUE_NEG_ADJ)
+    # print(ROOM_POS_ADJ)
 
