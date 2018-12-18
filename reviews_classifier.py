@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import lightgbm as lgb
 import synset_finder as sf
+import matplotlib.pyplot as plt
+
 from nltk import tokenize
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
@@ -262,6 +264,11 @@ def train_classifier(X_train, y_train):
     return classifier
 
 
+def feature_importance(classifier):
+    ax = lgb.plot_importance(classifier, max_num_features=20)
+    plt.savefig('feature_importance.png')
+
+
 def evaluate_classifier(classifier, X_test, y_test):
     # Evaluate our classifier and print it
     y_pred = classifier.predict(X_test, num_iteration=classifier.best_iteration)
@@ -331,5 +338,7 @@ if __name__ == '__main__':
     else:
         # Train classifier
         classifier = train_classifier(X_train, y_train)
+        # Draw feature importance graph
+        feature_importance(classifier)
         # Evaluate
         evaluate_classifier(classifier, X_test, y_test)
