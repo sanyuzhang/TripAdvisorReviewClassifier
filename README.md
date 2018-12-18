@@ -2,7 +2,8 @@
 A LightGBM model based classifier which can predict the overall rating of a hotel by parsing its reviews using NLTK
 
 **Env Setup**
-1. Using Python3. All the commands are using python3. If you have both python2 and python3 env, do:
+1. Using Python3. All the commands are using python3.
+2. If you have both python2 and python3 env, do:
    * Replace python to python3
    * Replace pip to pip3
 
