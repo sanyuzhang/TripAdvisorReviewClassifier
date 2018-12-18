@@ -10,61 +10,86 @@ from sklearn.model_selection import train_test_split
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
-IS_TUNING = False
 LINE_SEPARATOR = '\n'
+
+# True: Use GridCVSearch to tune the parameters of lightGBM model.
+# False: Skip tuning.
+IS_TUNING = False
+
+# True: Skip the process of parsing reviews, using parsed data instead.
+# False: Need 15 min for NLTK to parse 230,917 reviews.
+IS_PROCESSED_DATA = True
 
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
 #SERVICE
-SERVICE = {'staff', 'service'}
+SERVICE_ASPECT = 'service'
+SERVICE_KEYWORDS = {'staff', 'staffs', 'service'}
 SERVICE_POS_ADJ = sf.find_all_synsets(['nice', 'excellent', 'good', 'great', 'helpful', 'polite'])
 SERVICE_NEG_ADJ = sf.find_all_synsets(['bad', 'unpleasent', 'disordered', 'unhelpful', 'impolite', 'unfriendly'])
 
 #ROOM
+ROOM_ASPECT = 'room'
+ROOM_KEYWORDS = {'room', 'hotel', 'lobby', 'hall'}
 ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable'])
 ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'uncomfortable'])
 
 #CLEANLINESS
+CLEAN_ASPECT = 'cleaniness'
+CLEAN_KEYWORDS = {'room', 'hotel', 'lobby', 'hall', 'bed', 'bathroom', 'toilet', 'restroom'}
 CLEAN_POS_ADJ = sf.find_synsets('clean')
 CLEAN_NEG_ADJ = sf.find_synsets('dirty')
 
 #FOOD
+FOOD_ASPECT = 'food'
+FOOD_KEYWORDS = {'food', 'lunch', 'dinner', 'breakfast', 'brunch', 'tea', 'cafe'}
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
-# Location
-LOCA = ['location', 'view']
-LOCA_POS_ADJ = sf.find_all_synsets(['good', 'safe', 'close', 'beautiful'])
-LOCA_NEG_ADJ = sf.find_all_synsets(['far', 'terrible'])
+# LOCATION
+LOC_ASPECT = 'location'
+LOC_KEYWORDS = {'location', 'view'}
+LOC_POS_ADJ = sf.find_all_synsets(['good', 'safe', 'close', 'beautiful'])
+LOC_NEG_ADJ = sf.find_all_synsets(['far', 'terrible'])
 
-# Value
+# VALUE
+VALUE_ASPECT = 'value'
+VALUE_KEYWORDS = {'price', 'value'}
 POS_VALUE = sf.find_synsets('affordable')
 NEG_VALUE = sf.find_synsets('expensive')
-VALUE = {'price', 'value'}
 VALUE_POS_ADJ = sf.find_all_synsets(['good', 'reasonable'])
 VALUE_NEG_ADJ = sf.find_synsets('high')
+
 
 def create_feature_sets(df):
     # Create feature sets
 
-    # Remove the hotels with num_of_reviews < 0
-    df = df[df['num_reviews'] >= 0]
+    if IS_PROCESSED_DATA:
+        # Load processed data to save time
+        df = pd.read_csv('processed_data.csv')
+    else:
+        # Remove the hotels with num_of_reviews < 0
+        df = df[df['num_reviews'] >= 0]
 
-    # Generate features
-    df = gen_review_features(df)
+        # Generate features
+        df = gen_review_features(df)
 
-    # Encode str type
-    for col in FEATURES:
-        df[col] = pd.Categorical(df[col])
-        df[col] = df[col].cat.codes
+        # Encode str type
+        for col in FEATURES:
+            df[col] = pd.Categorical(df[col])
+            df[col] = df[col].cat.codes
 
-    df[df == np.Inf] = np.NaN
-    df[df == np.NINF] = np.NaN
-    df.fillna(0, inplace=True)
+        df[df == np.Inf] = np.NaN
+        df[df == np.NINF] = np.NaN
+        df.fillna(0, inplace=True)
+
+        # Save data to file
+        df.to_csv('processed_data.csv')
 
     ALL_FEATURES = FEATURES + NEW_FEATURES
+
     X = df[ALL_FEATURES]
     y = df[TARGET]
 
@@ -111,12 +136,15 @@ def analyze_reviews(df, doc, reviews):
         pos += review_sentiment['pos'] * num_of_words
         compound += review_sentiment['compound'] * num_of_words
         
-        cleaniness_list.append(is_clean(tokens) * num_of_words)
-        room_list.append(is_nice_room(tokens) * num_of_words)
-        service_list.append(is_nice_service(tokens) * num_of_words)
-        location_list.append(is_nice_location(tokens) * num_of_words)
-        value_list.append(is_nice_value(tokens) * num_of_words)
-        food_list.append(is_nice_food(tokens) * num_of_words)
+        bgrams = list(nltk.bigrams(tokens))
+        tgrams = list(nltk.trigrams(tokens))
+
+        cleaniness_list.append(aspect_scoring(tokens, bgrams, tgrams, CLEAN_ASPECT) * num_of_words)
+        room_list.append(aspect_scoring(tokens, bgrams, tgrams, ROOM_ASPECT) * num_of_words)
+        service_list.append(aspect_scoring(tokens, bgrams, tgrams, SERVICE_ASPECT) * num_of_words)
+        location_list.append(aspect_scoring(tokens, bgrams, tgrams, LOC_ASPECT) * num_of_words)
+        value_list.append(aspect_scoring(tokens, bgrams, tgrams, VALUE_ASPECT) * num_of_words)
+        food_list.append(aspect_scoring(tokens, bgrams, tgrams, FOOD_ASPECT) * num_of_words)
 
     quality = (
         to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
@@ -150,83 +178,55 @@ def to_quality_pair(quality_lsit, normalize_val):
     return (np.mean(quality), np.var(quality))
 
 
-def is_clean(review_tokens):
-    for word in review_tokens:
-        if word in CLEAN_NEG_ADJ:
-            return -1
-        elif word in CLEAN_POS_ADJ:
-            return 1
-    return 0
-
-
-def is_nice_room(review_tokens):
-    for word in review_tokens:
-        if word in ROOM_NEG_ADJ:
-            return -1
-        elif word in ROOM_POS_ADJ:
-            return 1
-    return 0
-
-
-def is_nice_service(review_tokens):
-    # for word in review_tokens:
-    #     if word in SERVICE_NEG:
-    #         return -1
-    #     elif word in SERVICE_POS:
-    #         return 1
-    for (x, y) in list(nltk.bigrams(review_tokens)):
-        if y in SERVICE and x in SERVICE_POS_ADJ:
-            return 1
-        elif y in SERVICE and x in SERVICE_NEG_ADJ:
-            return -1
-    return 0
-
-
-def is_nice_location(review_tokens):
-    for (x, y) in list(nltk.bigrams(review_tokens)):
-        try:
-            if y in LOCA and x in LOCA_POS_ADJ:
+def aspect_scoring(tokens, bgrams, tgrams, aspect):
+    if aspect == CLEAN_ASPECT:
+        for word in tokens:
+            if word in CLEAN_POS_ADJ:
                 return 1
-            elif y in LOCA and x in LOCA_NEG_ADJ:
+            elif word in CLEAN_NEG_ADJ:
                 return -1
-        except StopIteration:
-            return
-    for (x, y, z) in list(nltk.trigrams(review_tokens)):
-        try:
-            if x in LOCA and z in LOCA_POS_ADJ:
+    elif aspect == ROOM_ASPECT:
+        for (x, y) in bgrams:
+            for word in tokens:
+                if word in ROOM_POS_ADJ:
+                    return 1
+                elif word in ROOM_NEG_ADJ:
+                    return -1
+    elif aspect == SERVICE_ASPECT:
+        for (x, y) in bgrams:
+            if y in SERVICE_KEYWORDS and x in SERVICE_POS_ADJ:
                 return 1
-            elif x in LOCA and z in LOCA_NEG_ADJ:
+            elif y in SERVICE_KEYWORDS and x in SERVICE_NEG_ADJ:
                 return -1
-        except StopIteration:
-            return
-    # for word in review_tokens:
-    #     if word in LOCA_POS_ADJ:
-    #         return 1
-    #     elif word in LOCA_NEG_ADJ:
-    #         return -1
-    return 0
-
-
-def is_nice_value(review_tokens):
-    for word in review_tokens:
-        if word in POS_VALUE:
-            return 1
-        elif word in NEG_VALUE:
-            return -1
-    for (x, y) in list(nltk.bigrams(review_tokens)):
-        if y in VALUE and x in VALUE_POS_ADJ:
-            return 1
-        elif y in VALUE and x in VALUE_NEG_ADJ:
-            return -1
-    return 0
-
-
-def is_nice_food(review_tokens):
-    for word in review_tokens:
-        if word in FOOD_NEG_ADJ:
-            return -1
-        elif word in FOOD_POS_ADJ:
-            return 1
+    elif aspect == LOC_ASPECT:
+        for (x, y) in bgrams:
+            if y in LOC_KEYWORDS and x in LOC_POS_ADJ:
+                return 1
+            elif y in LOC_KEYWORDS and x in LOC_NEG_ADJ:
+                return -1
+        for (x, y, z) in tgrams:
+            if x in LOC_KEYWORDS:
+                if z in LOC_POS_ADJ:
+                    return 1
+                elif z in LOC_NEG_ADJ:
+                    return -1
+    elif aspect == VALUE_ASPECT:
+        for word in tokens:
+            if word in POS_VALUE:
+                return 1
+            elif word in NEG_VALUE:
+                return -1
+        for (x, y) in bgrams:
+            if y in VALUE_KEYWORDS and x in VALUE_POS_ADJ:
+                return 1
+            elif y in VALUE_KEYWORDS and x in VALUE_NEG_ADJ:
+                return -1
+    elif aspect == FOOD_ASPECT:
+        for word in tokens:
+            if word in FOOD_NEG_ADJ:
+                return -1
+            elif word in FOOD_POS_ADJ:
+                return 1
     return 0
 
 
@@ -261,15 +261,11 @@ def train_classifier(X_train, y_train):
 
 def evaluate_classifier(classifier, X_test, y_test):
     # Evaluate our classifier and print it
-
     y_pred = classifier.predict(X_test, num_iteration=classifier.best_iteration)
-
-    # Post processing
-    # X_num_reviews = X_test['num_reviews'].values
-    # for i in range(len(X_num_reviews)):
-    #     if X_num_reviews[i] < 0: y_pred[i] = -1
-
     print('Mean absolute error is:', mean_absolute_error(y_test, y_pred))
+
+    # Write TRUTH-PREDICT comparison results to csv file
+    pd.DataFrame({'TRUTH':y_test.values, 'PREDICT':y_pred}).to_csv('prediction.csv', index=False, header=['TRUTH', 'PREDICT'])
 
 
 def train_gridcv(X_train, y_train):
@@ -330,8 +326,4 @@ if __name__ == '__main__':
         classifier = train_classifier(X_train, y_train)
         # Evaluate
         evaluate_classifier(classifier, X_test, y_test)
-
-    # print(SERVICE)
-    # print(POS_SERVICE)
-    # print(VALUE_NEG_ADJ)
 
