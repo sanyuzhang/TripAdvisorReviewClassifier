@@ -21,13 +21,12 @@ IS_TUNING = False
 
 # True: Need 15 min for NLTK to parse 230,917 reviews.
 # False: Skip the process of parsing reviews, using parsed data instead.
-RUN_FULL_CODE = True
-FAST_PROCESS = 'fast'
-SLOW_PROCESS = 'slow'
+RUN_FULL_CODE = False
+FULL_PROCESS = 'full'
 
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
-NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
+NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleanliness', 'room', 'service', 'location', 'value', 'food', 'cleanliness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
 #SERVICE
 SERVICE_KEYWORDS = {'staff', 'staffs', 'service'}
@@ -70,7 +69,7 @@ def create_feature_sets(df):
         df = pd.read_csv('processed_data.csv')
     else:
         # Remove the hotels with num_of_reviews < 0
-        df = df[df['num_reviews'] >= 0]
+        df = df[df['num_reviews'] > 0]
         df = df[df['overall_ratingsource'] >= 0]
 
         # Generate features
@@ -121,7 +120,7 @@ def gen_review_features(df):
 def analyze_reviews(df, doc, reviews):
     # Add or fix feature extraction functions below, do not forget to update line 17
 
-    cleaniness_list, room_list, service_list, location_list, value_list, food_list = [], [], [], [], [], []
+    cleanliness_list, room_list, service_list, location_list, value_list, food_list = [], [], [], [], [], []
     neg, neu, pos, compound, num_of_words, all_num_of_words = 0, 0, 0, 0, 0, 0
     sia = SentimentIntensityAnalyzer()
 
@@ -139,7 +138,7 @@ def analyze_reviews(df, doc, reviews):
         bgrams = list(nltk.bigrams(tokens))
         tgrams = list(nltk.trigrams(tokens))
 
-        cleaniness_list.append(is_clean(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
+        cleanliness_list.append(is_clean(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
         room_list.append(is_nice_room(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
         service_list.append(is_nice_service(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
         location_list.append(is_nice_location(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
@@ -147,18 +146,18 @@ def analyze_reviews(df, doc, reviews):
         food_list.append(is_nice_food(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
 
     quality = (
-        to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
+        to_quality_pair(cleanliness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
         to_quality_pair(service_list, all_num_of_words), to_quality_pair(location_list, all_num_of_words), 
         to_quality_pair(value_list, all_num_of_words), to_quality_pair(food_list, all_num_of_words)
     )
 
-    df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
-    df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
-    df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
-    df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'neu'] = neu / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'pos'] = pos / all_num_of_words
+    # df.loc[df['doc_id'] == doc, 'compound'] = compound / all_num_of_words
 
-    df.loc[df['doc_id'] == doc, 'cleaniness'] = quality[0][0]
-    df.loc[df['doc_id'] == doc, 'cleaniness_var'] = quality[0][1]
+    df.loc[df['doc_id'] == doc, 'cleanliness'] = quality[0][0]
+    df.loc[df['doc_id'] == doc, 'cleanliness_var'] = quality[0][1]
     df.loc[df['doc_id'] == doc, 'room'] = quality[1][0]
     df.loc[df['doc_id'] == doc, 'room_var'] = quality[1][1]
     df.loc[df['doc_id'] == doc, 'service'] = quality[2][0]
@@ -194,6 +193,7 @@ def is_nice_room(tokens, bgrams, tgrams, review_sentiment):
         elif word in ROOM_NEG_ADJ:
             return -1
     return 0
+
 
 
 def is_nice_service(tokens, bgrams, tgrams, review_sentiment):
@@ -332,7 +332,7 @@ if __name__ == '__main__':
 
     # Get args from command input
     if len(sys.argv) > 1:
-        RUN_FULL_CODE = sys.argv[1] == SLOW_PROCESS
+        RUN_FULL_CODE = sys.argv[1] == FULL_PROCESS
 
     # Sample classifier on small data
     filename = 'data/hotels.csv'
