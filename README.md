@@ -2,7 +2,8 @@
 A LightGBM model based classifier which can predict the overall rating of a hotel by parsing its reviews using NLTK
 
 **Env Setup**
-1. Using Python3. All the commands are using python3. If you have both python2 and python3 env, do:
+1. Using Python3. All the commands are using python3.
+2. If you have both python2 and python3 env, do:
    * Replace python to python3
    * Replace pip to pip3
 
@@ -15,3 +16,8 @@ A LightGBM model based classifier which can predict the overall rating of a hote
       * fast: Train the processed data with features extracted, which takes about 15 seconds.
    * `python reviews_classifier.py slow`
       * slow: Run the full code including feature extractions using NLTK, which takes 10+ minutes.
+
+**Folders**
+1. All the raw data are under the `data/`
+2. `processed_data.csv` are data of features extracted from raw data using NLTK.
+3. `prediction.csv` are a table of true ratings and our predicted ratings.
