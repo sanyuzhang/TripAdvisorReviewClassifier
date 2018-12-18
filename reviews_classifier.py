@@ -28,37 +28,31 @@ FEATURES = ['city', 'country', 'num_reviews']
 NEW_FEATURES = ['neg', 'neu', 'pos', 'compound', 'cleaniness', 'room', 'service', 'location', 'value', 'food', 'cleaniness_var', 'room_var', 'service_var', 'location_var', 'value_var', 'food_var']
 
 #SERVICE
-SERVICE_ASPECT = 'service'
 SERVICE_KEYWORDS = {'staff', 'staffs', 'service'}
 SERVICE_POS_ADJ = sf.find_all_synsets(['nice', 'excellent', 'good', 'great', 'helpful', 'polite'])
 SERVICE_NEG_ADJ = sf.find_all_synsets(['bad', 'unpleasent', 'disordered', 'unhelpful', 'impolite', 'unfriendly'])
 
 #ROOM
-ROOM_ASPECT = 'room'
 ROOM_KEYWORDS = {'room', 'hotel', 'lobby', 'hall'}
 ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable'])
 ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'uncomfortable'])
 
 #CLEANLINESS
-CLEAN_ASPECT = 'cleaniness'
 CLEAN_KEYWORDS = {'room', 'hotel', 'lobby', 'hall', 'bed', 'bathroom', 'toilet', 'restroom'}
 CLEAN_POS_ADJ = sf.find_synsets('clean')
 CLEAN_NEG_ADJ = sf.find_synsets('dirty')
 
 #FOOD
-FOOD_ASPECT = 'food'
 FOOD_KEYWORDS = {'food', 'lunch', 'dinner', 'breakfast', 'brunch', 'tea', 'cafe'}
 FOOD_POS_ADJ = sf.find_synsets('delicious')
 FOOD_NEG_ADJ = sf.find_synsets('distasteful')
 
 # LOCATION
-LOC_ASPECT = 'location'
 LOC_KEYWORDS = {'location', 'view'}
 LOC_POS_ADJ = sf.find_all_synsets(['good', 'safe', 'close', 'beautiful'])
 LOC_NEG_ADJ = sf.find_all_synsets(['far', 'terrible'])
 
 # VALUE
-VALUE_ASPECT = 'value'
 VALUE_KEYWORDS = {'price', 'value'}
 POS_VALUE = sf.find_synsets('affordable')
 NEG_VALUE = sf.find_synsets('expensive')
@@ -142,12 +136,12 @@ def analyze_reviews(df, doc, reviews):
         bgrams = list(nltk.bigrams(tokens))
         tgrams = list(nltk.trigrams(tokens))
 
-        cleaniness_list.append(aspect_scoring(tokens, bgrams, tgrams, CLEAN_ASPECT) * num_of_words)
-        room_list.append(aspect_scoring(tokens, bgrams, tgrams, ROOM_ASPECT) * num_of_words)
-        service_list.append(aspect_scoring(tokens, bgrams, tgrams, SERVICE_ASPECT) * num_of_words)
-        location_list.append(aspect_scoring(tokens, bgrams, tgrams, LOC_ASPECT) * num_of_words)
-        value_list.append(aspect_scoring(tokens, bgrams, tgrams, VALUE_ASPECT) * num_of_words)
-        food_list.append(aspect_scoring(tokens, bgrams, tgrams, FOOD_ASPECT) * num_of_words)
+        cleaniness_list.append(is_clean(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
+        room_list.append(is_nice_room(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
+        service_list.append(is_nice_service(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
+        location_list.append(is_nice_location(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
+        value_list.append(is_nice_value(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
+        food_list.append(is_nice_food(tokens, bgrams, tgrams, review_sentiment) * num_of_words)
 
     quality = (
         to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
@@ -181,55 +175,69 @@ def to_quality_pair(quality_lsit, normalize_val):
     return (np.mean(quality), np.var(quality))
 
 
-def aspect_scoring(tokens, bgrams, tgrams, aspect):
-    if aspect == CLEAN_ASPECT:
+def is_clean(tokens, bgrams, tgrams, review_sentiment):
+    for word in tokens:
+        if word in CLEAN_POS_ADJ:
+            return 1
+        elif word in CLEAN_NEG_ADJ:
+            return -1
+    return 0
+
+
+def is_nice_room(tokens, bgrams, tgrams, review_sentiment):
+    for (x, y) in bgrams:
         for word in tokens:
-            if word in CLEAN_POS_ADJ:
+            if word in ROOM_POS_ADJ:
                 return 1
-            elif word in CLEAN_NEG_ADJ:
+            elif word in ROOM_NEG_ADJ:
                 return -1
-    elif aspect == ROOM_ASPECT:
-        for (x, y) in bgrams:
-            for word in tokens:
-                if word in ROOM_POS_ADJ:
-                    return 1
-                elif word in ROOM_NEG_ADJ:
-                    return -1
-    elif aspect == SERVICE_ASPECT:
-        for (x, y) in bgrams:
-            if y in SERVICE_KEYWORDS and x in SERVICE_POS_ADJ:
+    return 0
+
+
+def is_nice_service(tokens, bgrams, tgrams, review_sentiment):
+    for (x, y) in bgrams:
+        if y in SERVICE_KEYWORDS and x in SERVICE_POS_ADJ:
+            return 1
+        elif y in SERVICE_KEYWORDS and x in SERVICE_NEG_ADJ:
+            return -1
+    return 0
+
+
+def is_nice_location(tokens, bgrams, tgrams, review_sentiment):
+    for (x, y) in bgrams:
+        if y in LOC_KEYWORDS and x in LOC_POS_ADJ:
+            return 1
+        elif y in LOC_KEYWORDS and x in LOC_NEG_ADJ:
+            return -1
+    for (x, y, z) in tgrams:
+        if x in LOC_KEYWORDS:
+            if z in LOC_POS_ADJ:
                 return 1
-            elif y in SERVICE_KEYWORDS and x in SERVICE_NEG_ADJ:
+            elif z in LOC_NEG_ADJ:
                 return -1
-    elif aspect == LOC_ASPECT:
-        for (x, y) in bgrams:
-            if y in LOC_KEYWORDS and x in LOC_POS_ADJ:
-                return 1
-            elif y in LOC_KEYWORDS and x in LOC_NEG_ADJ:
-                return -1
-        for (x, y, z) in tgrams:
-            if x in LOC_KEYWORDS:
-                if z in LOC_POS_ADJ:
-                    return 1
-                elif z in LOC_NEG_ADJ:
-                    return -1
-    elif aspect == VALUE_ASPECT:
-        for word in tokens:
-            if word in POS_VALUE:
-                return 1
-            elif word in NEG_VALUE:
-                return -1
-        for (x, y) in bgrams:
-            if y in VALUE_KEYWORDS and x in VALUE_POS_ADJ:
-                return 1
-            elif y in VALUE_KEYWORDS and x in VALUE_NEG_ADJ:
-                return -1
-    elif aspect == FOOD_ASPECT:
-        for word in tokens:
-            if word in FOOD_NEG_ADJ:
-                return -1
-            elif word in FOOD_POS_ADJ:
-                return 1
+    return 0
+
+
+def is_nice_value(tokens, bgrams, tgrams, review_sentiment):
+    for word in tokens:
+        if word in POS_VALUE:
+            return 1
+        elif word in NEG_VALUE:
+            return -1
+    for (x, y) in bgrams:
+        if y in VALUE_KEYWORDS and x in VALUE_POS_ADJ:
+            return 1
+        elif y in VALUE_KEYWORDS and x in VALUE_NEG_ADJ:
+            return -1
+    return 0
+
+
+def is_nice_food(tokens, bgrams, tgrams, review_sentiment):
+    for word in tokens:
+        if word in FOOD_NEG_ADJ:
+            return -1
+        elif word in FOOD_POS_ADJ:
+            return 1
     return 0
 
 
