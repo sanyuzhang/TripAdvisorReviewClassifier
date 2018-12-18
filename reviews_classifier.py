@@ -27,8 +27,8 @@ ROOM_POS_ADJ = sf.find_all_synsets(['spacious', 'comfortable'])
 ROOM_NEG_ADJ = sf.find_all_synsets(['small', 'uncomfortable'])
 
 #CLEANLINESS
-CLEAN_POS_ADJ = sf.find_all_synsets(['clean'])
-CLEAN_NEG_ADJ = sf.find_all_synsets(['dirty'])
+CLEAN_POS_ADJ = sf.find_synsets('clean')
+CLEAN_NEG_ADJ = sf.find_synsets('dirty')
 
 #FOOD
 FOOD_POS_ADJ = sf.find_synsets('delicious')
@@ -59,11 +59,6 @@ def create_feature_sets(df):
     for col in FEATURES:
         df[col] = pd.Categorical(df[col])
         df[col] = df[col].cat.codes
-
-    # for col in FEATURES:
-    #     if col != TARGET:
-    #         _df = df[df[col] >= 0]
-    #         df[df[col] == -1] = _df[col].mean()
 
     df[df == np.Inf] = np.NaN
     df[df == np.NINF] = np.NaN
@@ -116,12 +111,12 @@ def analyze_reviews(df, doc, reviews):
         pos += review_sentiment['pos'] * num_of_words
         compound += review_sentiment['compound'] * num_of_words
         
-        cleaniness_list.append(is_clean(tokens, review_sentiment) * num_of_words)
-        room_list.append(is_nice_room(tokens, review_sentiment) * num_of_words)
-        service_list.append(is_nice_service(tokens, review_sentiment) * num_of_words)
-        location_list.append(is_nice_location(tokens, review_sentiment) * num_of_words)
-        value_list.append(is_nice_value(tokens, review_sentiment) * num_of_words)
-        food_list.append(is_nice_food(tokens, review_sentiment) * num_of_words)
+        cleaniness_list.append(is_clean(tokens) * num_of_words)
+        room_list.append(is_nice_room(tokens) * num_of_words)
+        service_list.append(is_nice_service(tokens) * num_of_words)
+        location_list.append(is_nice_location(tokens) * num_of_words)
+        value_list.append(is_nice_value(tokens) * num_of_words)
+        food_list.append(is_nice_food(tokens) * num_of_words)
 
     quality = (
         to_quality_pair(cleaniness_list, all_num_of_words), to_quality_pair(room_list, all_num_of_words), 
@@ -155,7 +150,7 @@ def to_quality_pair(quality_lsit, normalize_val):
     return (np.mean(quality), np.var(quality))
 
 
-def is_clean(review_tokens, review_sentiment):
+def is_clean(review_tokens):
     for word in review_tokens:
         if word in CLEAN_NEG_ADJ:
             return -1
@@ -164,7 +159,7 @@ def is_clean(review_tokens, review_sentiment):
     return 0
 
 
-def is_nice_room(review_tokens, review_sentiment):
+def is_nice_room(review_tokens):
     for word in review_tokens:
         if word in ROOM_NEG_ADJ:
             return -1
@@ -173,7 +168,7 @@ def is_nice_room(review_tokens, review_sentiment):
     return 0
 
 
-def is_nice_service(review_tokens, review_sentiment):
+def is_nice_service(review_tokens):
     # for word in review_tokens:
     #     if word in SERVICE_NEG:
     #         return -1
@@ -187,7 +182,7 @@ def is_nice_service(review_tokens, review_sentiment):
     return 0
 
 
-def is_nice_location(review_tokens, review_sentiment):
+def is_nice_location(review_tokens):
     for (x, y) in list(nltk.bigrams(review_tokens)):
         try:
             if y in LOCA and x in LOCA_POS_ADJ:
@@ -212,7 +207,7 @@ def is_nice_location(review_tokens, review_sentiment):
     return 0
 
 
-def is_nice_value(review_tokens, review_sentiment):
+def is_nice_value(review_tokens):
     for word in review_tokens:
         if word in POS_VALUE:
             return 1
@@ -226,7 +221,7 @@ def is_nice_value(review_tokens, review_sentiment):
     return 0
 
 
-def is_nice_food(review_tokens, review_sentiment):
+def is_nice_food(review_tokens):
     for word in review_tokens:
         if word in FOOD_NEG_ADJ:
             return -1
@@ -244,7 +239,7 @@ def train_classifier(X_train, y_train):
         'boosting_type': 'gbdt',
         'objective': 'regression',
         'metric': 'mean_absolute_error',
-        'num_leaves': 7,
+        'num_leaves': 15,
         "num_threads": 4,
         'learning_rate': 0.005,
         'feature_fraction': 0.4,
@@ -289,9 +284,9 @@ def train_gridcv(X_train, y_train):
 
     # Create parameters to search
     gridParams = {
-        'learning_rate': [0.005],
-        'n_estimators': [1000],
-        'num_leaves': [3, 7, 15],
+        'learning_rate': [0.005, 0.001, 0.01],
+        'n_estimators': [500, 1000, 2000],
+        'num_leaves': [7, 15, 23],
         'colsample_bytree' : [1]
     }
 
