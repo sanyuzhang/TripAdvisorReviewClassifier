@@ -17,9 +17,11 @@ LINE_SEPARATOR = '\n'
 # False: Skip tuning.
 IS_TUNING = False
 
-# True: Skip the process of parsing reviews, using parsed data instead.
-# False: Need 15 min for NLTK to parse 230,917 reviews.
-IS_PROCESSED_DATA = True
+# True: Need 15 min for NLTK to parse 230,917 reviews.
+# False: Skip the process of parsing reviews, using parsed data instead.
+RUN_FULL_CODE = True
+FAST_PROCESS = 'fast'
+SLOW_PROCESS = 'slow'
 
 TARGET = 'overall_ratingsource'
 FEATURES = ['city', 'country', 'num_reviews']
@@ -67,7 +69,7 @@ VALUE_NEG_ADJ = sf.find_synsets('high')
 def create_feature_sets(df):
     # Create feature sets
 
-    if IS_PROCESSED_DATA:
+    if not RUN_FULL_CODE:
         # Load processed data to save time
         df = pd.read_csv('processed_data.csv')
     else:
@@ -314,8 +316,8 @@ def load_data(filename):
 if __name__ == '__main__':
 
     # Get args from command input
-    if len(sys.argv) > 1 and (sys.argv[1] == 'True' or sys.argv[1] == 'False'):
-        IS_PROCESSED_DATA = sys.argv[1]
+    if len(sys.argv) > 1:
+        RUN_FULL_CODE = sys.argv[1] == SLOW_PROCESS
 
     # Sample classifier on small data
     filename = 'data/hotels.csv'
