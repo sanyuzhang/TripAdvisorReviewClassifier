@@ -12,10 +12,10 @@ A LightGBM model based classifier which can predict the overall rating of a hote
 
 **How to Run**
 1. Type the command below.
-   * `python reviews_classifier.py fast`
-      * fast: Train the processed data with features extracted, which takes about 15 seconds.
-   * `python reviews_classifier.py slow`
-      * slow: Run the full code including feature extractions using NLTK, which takes 10+ minutes.
+   * `python reviews_classifier.py`
+      * Train the processed data with features extracted, which takes about 10+ seconds.
+   * `python reviews_classifier.py full`
+      * Run the full code including feature extractions using NLTK, which takes 10+ minutes.
 
 **Folders**
 1. All the raw data are under the `data/`
