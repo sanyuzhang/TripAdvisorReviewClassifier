@@ -1,5 +1,5 @@
-# TripAdvisorReviewClassifier
-A LightGBM model based classifier which can predict the overall rating of a hotel by parsing its reviews using NLTK
+# TripAdvisorReviewRegressor
+A LightGBM model based regressor which can predict the overall rating of a hotel by parsing its reviews using NLTK
 
 **Env Setup**
 1. Using Python3. All the commands are using python3.
