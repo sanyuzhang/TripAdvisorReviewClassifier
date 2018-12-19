@@ -287,7 +287,8 @@ def evaluate_classifier(classifier, X_test, y_test):
     print('Mean absolute error is:', mean_absolute_error(y_test, y_pred))
 
     # Write TRUTH-PREDICT comparison results to csv file
-    pd.DataFrame({'TRUTH':y_test.values, 'PREDICT':y_pred}).to_csv('prediction.csv', index=False, header=['TRUTH', 'PREDICT'])
+    y_diff = np.absolute(y_pred - y_test.values)
+    pd.DataFrame({'TRUTH': y_test.values, 'PREDICT': y_pred, 'DIFFERENCE': y_diff}).to_csv('prediction.csv', index=False, header=['TRUTH', 'PREDICT', 'DIFFERENCE'])
 
 
 def train_gridcv(X_train, y_train):
