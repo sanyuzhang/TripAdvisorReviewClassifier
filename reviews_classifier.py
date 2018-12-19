@@ -69,7 +69,7 @@ def create_feature_sets(df):
         df = pd.read_csv('processed_data.csv')
     else:
         # Remove the hotels with num_reviews < 0
-        df = df[df['num_reviews'] >= 0]
+        df = df[df['num_reviews'] > 0]
         df = df[df['overall_ratingsource'] >= 0]
 
         # Generate features
@@ -121,11 +121,10 @@ def analyze_reviews(df, doc, reviews):
     # Add or fix feature extraction functions below, do not forget to update line 17
 
     cleanliness_list, room_list, service_list, location_list, value_list, food_list = [], [], [], [], [], []
-    num_reviews, total_word_length, neg, neu, pos, compound, num_of_words, all_num_of_words = 0, 0, 0, 0, 0, 0, 0, 0
+    total_word_length, neg, neu, pos, compound, num_of_words, all_num_of_words = 0, 0, 0, 0, 0, 0, 0
     sia = SentimentIntensityAnalyzer()
 
     for review in reviews:
-        num_reviews += 1
         tokens = tokenize.word_tokenize(review)
         num_of_words = len(tokens)
         all_num_of_words += num_of_words
@@ -152,7 +151,7 @@ def analyze_reviews(df, doc, reviews):
         to_quality_pair(value_list, all_num_of_words), to_quality_pair(food_list, all_num_of_words)
     )
 
-    df.loc[df['doc_id'] == doc, 'num_reviews'] = num_reviews
+    df.loc[df['doc_id'] == doc, 'num_reviews'] = len(reviews)
     df.loc[df['doc_id'] == doc, 'total_word_length'] = all_num_of_words
 
     df.loc[df['doc_id'] == doc, 'neg'] = neg / all_num_of_words
